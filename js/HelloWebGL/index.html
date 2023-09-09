@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Computer Graphics - Task 1.2</title>
+		<meta charset="UTF-8">
+		<script type="text/javascript">
+		
+			var shaderProgram, gl; //Global variables
+		
+			function onLoad() { 
+				var canvas = document.getElementById('myCanvas');
+				gl = canvas.getContext("experimental-webgl"); //Now we get the WebGL context
+				
+				//This will initialize the shaders (code that is sent to the GPU)
+				shaderProgram = initShaders(gl);
+				
+				gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight); //Specify the dimensions of our viewport to be full size
+				gl.clear(gl.COLOR_BUFFER_BIT); //Clear the screen
+				
+				drawTriangle([0.0, 0.0]); //This should draw you a triangle with the midpoint at [0, 0], because we are in normalized device coordinates.
+			}
+			
+			function drawTriangle(position) {
+				//We create a buffer that holds the vertex positions
+				var triangleVertexPositionBuffer = gl.createBuffer();
+				
+				//We have 3 vertices that each has 3 floats.
+				triangleVertexPositionBuffer.numItems = 3;
+				triangleVertexPositionBuffer.itemSize = 3;
+				
+				//It is an array buffer, there are others as well
+				gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
+
+				var edgeLength = Math.sqrt(3);
+    			var height = Math.sqrt(Math.pow(edgeLength, 2) - Math.pow((edgeLength / 2), 2));
+
+				console.log(`height: ${height}, sideLen: ${edgeLength}`)
+
+				var x1 = position[0] - edgeLength / 2;
+                var y1 = position[1] - height / 3;
+
+                var x2 = position[0] + edgeLength / 2;
+                var y2 = y1;
+
+                var x3 = position[0];
+                var y3 = position[1] + 2 * height / 3;
+
+				var zCoord = 0.0;
+
+				var vertices = [
+				x1, y1, zCoord, // Bottom vertex
+				x2, y2, zCoord, // Top-left vertex
+				x3, y3, zCoord  // Top-right vertex
+				];
+
+				/* --Task--
+					The current code will draw you a triangle, but it is not equilateral.
+					Task is to generate another vertices array that has the vertices of an equilateral triangle.
+					Note that the coordinates are in normalized device space. This means that:
+						[0, 0, 0] - center
+						[-1, -1, 0] - bottom-left
+						[1, 1, 0] - top-right
+					Notice that the y-axis is inverted.
+					
+					FIXED BY PROJECTION MATRIX
+					Also, our viewport is 800x500. This means that 1 unit in y direction is not the same as 1 unit in x direction.
+				*/
+				
+
+				//Send the data to the GPU as a float 32 array.
+				//Read more at: https://www.opengl.org/sdk/docs/man/html/glBufferData.xhtml
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+				
+				//Assign our current buffer as an attribute called "aVertexPosition" to the shaders.
+				//This will make sure that 3 floats (position coordinates) are sent to each vertex.
+				gl.vertexAttribPointer(shaderProgram.aVertexPosition, triangleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+				
+				
+				//Draw call that will take the vertices from the current buffer. 
+				//We render the vertices from index 0 and there are 3 (numItems) of them.
+				gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
+			}
+		
+		</script>
+		<script type="text/javascript" src="utils.js"></script>
+		<script id="shader-fs" type="x-shader/x-fragment">
+			precision mediump float;
+
+			void main() {
+				gl_FragColor = vec4(1.0, 0.2, 0.2, 1.0); //Draw all fragments with a red color
+			}
+		</script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.4.0/gl-matrix-min.js"></script>
+
+		<script id="shader-vs" type="x-shader/x-vertex">
+			attribute vec3 aVertexPosition;
+			uniform mat4 uProjectionMatrix;
+
+			void main() {
+				gl_Position = uProjectionMatrix * vec4(aVertexPosition, 1.0); //The position is "as is". Notice homogeneous coordinates. This is also in normalized device coordinates.
+			}
+		</script>
+	</head>
+	<body onload="onLoad()">
+		<canvas width="800" height="500" id="myCanvas"></canvas>
+	</body>
+</html>
