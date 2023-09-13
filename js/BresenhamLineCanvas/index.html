@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Computer Graphics - Task 2.1</title>
+		<meta charset="UTF-8">
+		<script type="text/javascript">
+		
+			var context, bresenhamContext; //We hold the contexts in a global variable
+		
+			function onLoad() { //This will be called once the page is loaded
+				context = document.getElementById('myCanvas').getContext('2d');			  
+				bresenhamContext = document.getElementById('myBresenhamCanvas').getContext('2d'); 
+				
+				//We will generate a number of lines to draw
+				var lines = [];
+				var angle;
+				for (angle = -Math.PI / 2; angle <= Math.PI / 2; angle += Math.PI / 10) {
+					lines.push([
+						[Math.round(-100 * Math.cos(angle)) + 100, Math.round(-100 * Math.sin(angle)) + 100], 
+						[Math.round(100 * Math.cos(angle)) + 100, Math.round(100 * Math.sin(angle)) + 100]
+					])
+				}
+				//Those lines will always start from the left
+				
+				//Let's draw those lines
+				var line;
+				for (line in lines) {
+					drawLine(lines[line][0], lines[line][1]);
+					drawBresenhamLine(lines[line][0], lines[line][1]);
+				}
+			}
+			
+			/**
+			 * This function draw the lines using standard canvas path drawing. It draw smooth lines.
+			 */
+			function drawLine(startPosition, endPosition) {
+				context.beginPath();
+				context.moveTo(startPosition[0], startPosition[1]);
+				context.lineTo(endPosition[0], endPosition[1]);
+				context.stroke();
+			}
+			
+			/**
+			 * This functions will draw lines with the Bresenham line drawing algorithm. The lines will not be smooth.
+			 */
+			function drawBresenhamLine(startPosition, endPosition) {
+				var deltaX = endPosition[0] - startPosition[0]; //Change in the X direction
+				var deltaY = endPosition[1] - startPosition[1]; //Change in the Y direction
+				var error = 0;
+				var deltaError;
+				
+				var black = [0, 0, 0];
+				
+				if (Math.abs(deltaX) >= Math.abs(deltaY)) { //Change in X is greater than change in Y. Non-steep line.
+					deltaError = deltaY / deltaX; //The slope
+					
+					if (deltaError < 0) { //Ascending line, positive change in x direction results in negative change in y.
+					
+						y = startPosition[1]; //Initial y is from the start position
+						
+						for (x = startPosition[0]; x <= endPosition[0]; x++) { //We iterate over all the x values, because those change the quickest.
+							putPixel(x, y, black); //Write the pixel
+							error += deltaError;   //Sum our error
+							
+							if (error <= -0.5) {   //Error is greater than half a pixel
+								y -= 1.0;		   //Decrease the y coordinate (ascending line, y coordinate decreases)
+								error += 1.0	   //We moved 1 pixel with y -= 1.0, error is now 1 unit less.
+							}
+						}
+					} else { //Descending line
+						// --Task--
+						//Similar logic here, but now the line is descending, so the y coordinates and the errorDelta will increase
+					}			
+				} else { //Steep line
+					deltaError = deltaX / deltaY; //Use the inversed slope
+					
+					/**
+					 * --Task--
+					 * For steep lines the y coordinate will change more than x.
+					 * First consider the descending steep lines. The logic will be similar as before.
+					 * Then consider the ascending steep lines. There the start y-coordinate is greater than the end y-coordinate.
+					 */
+					
+				}
+			}
+			
+			function putPixel(x, y, color) {
+				/* //You could do:
+				var imageData = bresenhamContext.createImageData(1,1); //We create new data for the Bresenham canvas context
+				imageData.data[0] = color[0];
+				imageData.data[1] = color[1];
+				imageData.data[2] = color[2];
+				imageData.data[3] = 255
+				bresenhamContext.putImageData(imageData, x, y); //Put this data to the Bresenham context
+				*/
+				//But this is faster:
+				//http://jsperf.com/setting-canvas-pixel
+				bresenhamContext.fillStyle = 'rgb(' + Math.round(color[0]) + ',' + Math.round(color[1]) + ',' + Math.round(color[2]) + ')';
+				bresenhamContext.fillRect(x, y, 1, 1);
+			}
+		
+		</script>
+		<style type="text/css">
+			canvas {
+				border: 1px solid black;
+				margin: 2px;
+				float: left;
+			}
+		</style>
+	</head>
+	<body onload="onLoad()">
+		<canvas width="200" height="200" id="myCanvas"></canvas>
+		<canvas width="200" height="200" id="myBresenhamCanvas"></canvas>
+	</body>
+</html>
