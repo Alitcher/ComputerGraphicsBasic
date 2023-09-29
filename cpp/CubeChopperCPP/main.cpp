@@ -7,7 +7,7 @@
 #include <GLFW/glfw3.h>     // Windows and input
 #include <glm/glm.hpp>      // OpenGL math library
 #include "shader_util.h"    // Utility methods to keep this file a bit shorter.
-
+#include <chrono>
 // --------------- Forward declarations ------------- //
 GLuint createWall(glm::vec3 color);
 GLuint createCube(glm::vec3 color);
@@ -34,74 +34,7 @@ void initWalls() {
     floorVAO = createWall(glm::vec3(0.22, 0.22, 0.22));
 }
 
-/**
- * Use this method to initialize the 3 components of your chopper
-*/
-void initChopper() {
-chopperVAO = createCube(glm::vec3(1.0f, 0.35f, 0.2f)); 
-firstBladeVAO = secondBladeVAO = createCube(glm::vec3(0.65f, 0.78f, 0.97f));
-}
 
-/**
-*   Study the createWall method and create similar method for a cube. The cube will be used
-*   for all 3 parts of the chopper. This means it should be a unit cube, which you can scale
-*   in the drawing method.
-*/
-GLuint createCube(glm::vec3 color) {
-    GLfloat vertices[] = {
-        -1.0, -1.0, 1.0,  // 0
-        1.0, -1.0, 1.0,   // 1
-        1.0, 1.0, 1.0,    // 2
-        -1.0, 1.0, 1.0,   // 3
-        -1.0, -1.0, -1.0, // 4
-
-        1.0, -1.0, -1.0, // 5
-        1.0, 1.0, -1.0,  // 6
-        -1.0, 1.0, -1.0, // 7
-    };
-
-    GLubyte indices[] = {
-
-        0, 1, 2, // Front face 1st triangle
-        0, 2, 3, // Front face 2nd triangle
-
-        7, 6, 5, // Back face 1st triangle
-        7, 5, 4, // Back face 2nd triangle
-
-        4, 5, 1, // Bottom face 1st triangle
-        4, 1, 0, // Bottom face 2nd triangle
-
-        3, 2, 6, // Top face 1st triangle
-        3, 6, 7, // Top face 2nd triangle
-
-        4, 0, 3, // Left face 1st triangle
-        4, 3, 7, // Left face 2nd triangle
-
-        1, 5, 6, // Right face 1st triangle
-        1, 6, 2  // Right face 2nd triangle
-    };
-
-        GLfloat colors[24]; // 8 vertices x 3 color values
-    for(int i = 0; i < 24; i+=3) {
-        colors[i] = color[0];
-        colors[i+1] = color[1];
-        colors[i+2] = color[2];
-    }
-
-        GLuint vertexArrayHandle;
-    glGenVertexArrays(1, &vertexArrayHandle);
-    glBindVertexArray(vertexArrayHandle);
-
-    shader.attribute3fv("position", vertices, 36);
-    shader.attribute3fv("color", colors, 36);
-
-    GLuint vboHandle;
-    glGenBuffers(1, &vboHandle);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboHandle);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLubyte) * 36, indices, GL_STATIC_DRAW);
-
-    return vertexArrayHandle;
-}
 
 /**
 * In the first practice session we used immediate mode(glBegin, followed by vertices)
@@ -180,45 +113,120 @@ GLuint createWall(glm::vec3 color) {
     return vertexArrayHandle;
 }
 
+/**
+ * Use this method to initialize the 3 components of your chopper
+*/
+void initChopper() {
+chopperVAO = createCube(glm::vec3(1.0f, 0.35f, 0.2f)); 
+firstBladeVAO = secondBladeVAO = createCube(glm::vec3(0.65f, 0.78f, 0.97f));
+}
+
+/**
+*   Study the createWall method and create similar method for a cube. The cube will be used
+*   for all 3 parts of the chopper. This means it should be a unit cube, which you can scale
+*   in the drawing method.
+*/
+GLuint createCube(glm::vec3 color) {
+    GLfloat vertices[] = {
+        -1.0, -1.0, 1.0,  // 0
+        1.0, -1.0, 1.0,   // 1
+        1.0, 1.0, 1.0,    // 2
+        -1.0, 1.0, 1.0,   // 3
+        -1.0, -1.0, -1.0, // 4
+
+        1.0, -1.0, -1.0, // 5
+        1.0, 1.0, -1.0,  // 6
+        -1.0, 1.0, -1.0, // 7
+    };
+
+    GLubyte indices[] = {
+
+        0, 1, 2, // Front face 1st triangle
+        0, 2, 3, // Front face 2nd triangle
+
+        7, 6, 5, // Back face 1st triangle
+        7, 5, 4, // Back face 2nd triangle
+
+        4, 5, 1, // Bottom face 1st triangle
+        4, 1, 0, // Bottom face 2nd triangle
+
+        3, 2, 6, // Top face 1st triangle
+        3, 6, 7, // Top face 2nd triangle
+
+        4, 0, 3, // Left face 1st triangle
+        4, 3, 7, // Left face 2nd triangle
+
+        1, 5, 6, // Right face 1st triangle
+        1, 6, 2  // Right face 2nd triangle
+    };
+
+        GLfloat colors[24]; // 8 vertices x 3 color values
+    for(int i = 0; i < 24; i+=3) {
+        colors[i] = color[0];
+        colors[i+1] = color[1];
+        colors[i+2] = color[2];
+    }
+
+        GLuint vertexArrayHandle;
+    glGenVertexArrays(1, &vertexArrayHandle);
+    glBindVertexArray(vertexArrayHandle);
+
+    shader.attribute3fv("position", vertices, 36);
+    shader.attribute3fv("color", colors, 36);
+
+    GLuint vboHandle;
+    glGenBuffers(1, &vboHandle);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboHandle);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLubyte) * 36, indices, GL_STATIC_DRAW);
+
+    return vertexArrayHandle;
+}
+
+std::chrono::time_point<std::chrono::system_clock> start;
+std::chrono::time_point<std::chrono::system_clock> end;
+std::chrono::duration<double> elapsed_seconds;
+
 void drawChopper() {
 
-
+    float rotationAngleX = static_cast<float>(elapsed_seconds.count() * 2 * glm::pi<double>());
+    float rotationAngleY = rotationAngleX; 
     std::stack<glm::mat4> ms; // this is matrix stack.
     ms.push(glm::mat4(1.0)); //Push an identity matrix to the bottom of stack
-
         ms.push(ms.top());
-           // ms.top() = glm::rotate(ms.top(), glm::radians(90.0f), glm::vec3(0.0, .0, 0.0));
-            ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 0.0, 0.0));
-            ms.top() = glm::scale(ms.top(),glm::vec3(3.0, 2.0, 5.0));
-            // Send the current model matrix at the top of stack to the vertex shader.
-            shader.uniformMatrix4fv("modelMatrix", ms.top());
-            glBindVertexArray(chopperVAO);
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
-        ms.pop();
+            // ms.top() = glm::rotate(ms.top(), glm::radians(static_cast<float>(rotationAngleY)), glm::vec3(0.0, 1.0, 0.0));
+            // ms.top() = glm::rotate(ms.top(), glm::radians(static_cast<float>(rotationAngleX)), glm::vec3(1.0, 0.0, 0.0));
         
-        ms.push(ms.top());
-           // ms.top() = glm::rotate(ms.top(), glm::radians(90.0f), glm::vec3(0.0, .0, 0.0));
-            ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 5.5, 0.0));
             ms.push(ms.top());
-                // ms.top() = glm::rotate(ms.top(), glm::radians(90.0f), glm::vec3(0.0, .0, 0.0));
+
+                ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 0.0, 0.0));
+                ms.top() = glm::scale(ms.top(),glm::vec3(5.0, 2.0, 3.0));
                 // Send the current model matrix at the top of stack to the vertex shader.
-                ms.top() = glm::scale(ms.top(),glm::vec3(5.0, 0.5, 2.0));
-                ms.top() = glm::translate(ms.top(), glm::vec3(-1.5, 0.0, 0.0));
                 shader.uniformMatrix4fv("modelMatrix", ms.top());
-                glBindVertexArray(firstBladeVAO);
+                glBindVertexArray(chopperVAO);
                 glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
             ms.pop();
             
             ms.push(ms.top());
-                // ms.top() = glm::rotate(ms.top(), glm::radians(90.0f), glm::vec3(0.0, .0, 0.0));
-                // Send the current model matrix at the top of stack to the vertex shader.
-                ms.top() = glm::scale(ms.top(),glm::vec3(5.0, 0.5, 2.0));
-                ms.top() = glm::translate(ms.top(), glm::vec3(1.5, 0.0, 0.0));
-                shader.uniformMatrix4fv("modelMatrix", ms.top());
-                glBindVertexArray(secondBladeVAO);
-                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
+                ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 4.0, 0.0));
+                ms.top() = glm::rotate(ms.top(), static_cast<float>(rotationAngleX), glm::vec3(0.0, 1.0, 0.0));
+
+                ms.push(ms.top());
+                    ms.top() = glm::scale(ms.top(),glm::vec3(5.0, 0.5, 2.0));
+                    ms.top() = glm::translate(ms.top(), glm::vec3(-1.25, 0.0, 0.0));
+                    shader.uniformMatrix4fv("modelMatrix", ms.top());
+                    glBindVertexArray(firstBladeVAO);
+                    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
+                ms.pop();
+                
+                ms.push(ms.top());
+                    ms.top() = glm::scale(ms.top(),glm::vec3(5.0, 0.5, 2.0));
+                    ms.top() = glm::translate(ms.top(), glm::vec3(1.25, 0.0, 0.0));
+                    shader.uniformMatrix4fv("modelMatrix", ms.top());
+                    glBindVertexArray(secondBladeVAO);
+                    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
+                ms.pop();
             ms.pop();
-        ms.pop();
+         ms.pop();
     ms.pop();   
 
 }
@@ -355,13 +363,17 @@ int main(int argc, char *argv[]) {
     glCullFace(GL_BACK);
     //Clear our background to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    start = std::chrono::system_clock::now();
 
     while (!glfwWindowShouldClose(win)) {
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         drawHangar();
         drawChopper();
         glfwSwapBuffers(win);
         glfwPollEvents();
+        end = std::chrono::system_clock::now();
+        elapsed_seconds = end - start;
         usleep(1000);
     }
 
