@@ -38,11 +38,8 @@ void initWalls() {
  * Use this method to initialize the 3 components of your chopper
 */
 void initChopper() {
-chopperVAO = createCube(glm::vec3(1.0f, 0.5f, 0.0f));
-firstBladeVAO = createCube(glm::vec3(1.0f, 0.5f, 0.0f));
-secondBladeVAO = createCube(glm::vec3(1.0f, 0.5f, 0.0f));
-
-// firstBladeVAO, secondBladeVAO;
+chopperVAO = createCube(glm::vec3(1.0f, 0.35f, 0.2f)); 
+firstBladeVAO = secondBladeVAO = createCube(glm::vec3(0.65f, 0.78f, 0.97f));
 }
 
 /**
@@ -63,7 +60,7 @@ GLuint createCube(glm::vec3 color) {
         -1.0, 1.0, -1.0, // 7
     };
 
-    GLfloat faces[] = {
+    GLubyte indices[] = {
 
         0, 1, 2, // Front face 1st triangle
         0, 2, 3, // Front face 2nd triangle
@@ -101,7 +98,7 @@ GLuint createCube(glm::vec3 color) {
     GLuint vboHandle;
     glGenBuffers(1, &vboHandle);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboHandle);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLubyte) * 36, faces, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLubyte) * 36, indices, GL_STATIC_DRAW);
 
     return vertexArrayHandle;
 }
@@ -185,67 +182,47 @@ GLuint createWall(glm::vec3 color) {
 
 void drawChopper() {
 
-//global position
-    /**
-    *   Hint: To get time, use glfwGetTime() function. This will return
-    *   double precision seconds since GLFW was initiated.
-    */
-    std::stack<glm::mat4> ms;
-    ms.push(glm::mat4(1.0f));
 
-    // Position the whole chopper
-    ms.top() = glm::translate(ms.top(), glm::vec3(0.0f, 0.0f, -5.0f)); // Replace with actual position of chopper
-    
-    // Draw Chopper Body
-    ms.push(ms.top()); 
-    shader.uniformMatrix4fv("modelMatrix", ms.top());
-    glBindVertexArray(chopperVAO); // Assume chopperVAO is the VAO for the chopper body
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0); 
-    ms.pop();
+    std::stack<glm::mat4> ms; // this is matrix stack.
+    ms.push(glm::mat4(1.0)); //Push an identity matrix to the bottom of stack
 
-    // Draw Blade, this can be placed relative to Chopper body
-    ms.push(ms.top()); 
-    ms.top() = glm::translate(ms.top(), glm::vec3(1.0f, 0.0f, -5.0f)); // Replace with actual position relative to chopper body
-    shader.uniformMatrix4fv("modelMatrix", ms.top());
-    glBindVertexArray(firstBladeVAO);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0); 
+        ms.push(ms.top());
+           // ms.top() = glm::rotate(ms.top(), glm::radians(90.0f), glm::vec3(0.0, .0, 0.0));
+            ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 0.0, 0.0));
+            ms.top() = glm::scale(ms.top(),glm::vec3(3.0, 2.0, 5.0));
+            // Send the current model matrix at the top of stack to the vertex shader.
+            shader.uniformMatrix4fv("modelMatrix", ms.top());
+            glBindVertexArray(chopperVAO);
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
+        ms.pop();
+        
+        ms.push(ms.top());
+           // ms.top() = glm::rotate(ms.top(), glm::radians(90.0f), glm::vec3(0.0, .0, 0.0));
+            ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 5.5, 0.0));
+            ms.push(ms.top());
+                // ms.top() = glm::rotate(ms.top(), glm::radians(90.0f), glm::vec3(0.0, .0, 0.0));
+                // Send the current model matrix at the top of stack to the vertex shader.
+                ms.top() = glm::scale(ms.top(),glm::vec3(5.0, 0.5, 2.0));
+                ms.top() = glm::translate(ms.top(), glm::vec3(-1.5, 0.0, 0.0));
+                shader.uniformMatrix4fv("modelMatrix", ms.top());
+                glBindVertexArray(firstBladeVAO);
+                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
+            ms.pop();
+            
+            ms.push(ms.top());
+                // ms.top() = glm::rotate(ms.top(), glm::radians(90.0f), glm::vec3(0.0, .0, 0.0));
+                // Send the current model matrix at the top of stack to the vertex shader.
+                ms.top() = glm::scale(ms.top(),glm::vec3(5.0, 0.5, 2.0));
+                ms.top() = glm::translate(ms.top(), glm::vec3(1.5, 0.0, 0.0));
+                shader.uniformMatrix4fv("modelMatrix", ms.top());
+                glBindVertexArray(secondBladeVAO);
+                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
+            ms.pop();
+        ms.pop();
+    ms.pop();   
 
-        // Draw Blade1, this is relative to the Blade
-        ms.push(ms.top()); 
-        ms.top() = glm::translate(ms.top(), glm::vec3(1.0f, 0.0f, 0.0f)); // Replace with actual position relative to Blade
-        shader.uniformMatrix4fv("modelMatrix", ms.top());
-        glBindVertexArray(secondBladeVAO);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0); 
-        ms.pop(); // pop Blade1
-    
-
-    
-    ms.pop(); // pop Blade
-
-    ms.pop(); // Pop the initial matrix
 }
 
-
-/**
-*   Geometry for all the walls is centered at coordinate (0,0,0). In the drawing method
-*   we will use model matrix to rotate, scale and transpose the the walls. Since we want
-*   to be able to undo some rotations after drawing an object, we will keep the matrixes
-*   in a stack. By pushing matrix to the stack we create a save point, which we can return
-*   to by doing a pop() on the stack.
-*
-*   This lets us create parent - child relationship between two objects with following steps:
-*       Modify the model matrix to scale, rotation and position we want it to be.
-*       Draw the parent
-*       push() a matrix onto the stack
-*           Modify child scale, rotation and position.
-*           Draw the child
-*       pop() to get back to parents transformation
-*       push() a matrix onto the stack
-*           Modify another child scale, rotation and position.
-*           Draw the child
-*       pop()
-*       etc..
-*/
 void drawHangar() {
     std::stack<glm::mat4> ms; // this is matrix stack.
     ms.push(glm::mat4(1.0)); //Push an identity matrix to the bottom of stack
@@ -307,8 +284,6 @@ void drawHangar() {
     *   every vertex on GPU.
     */
 }
-
-
 
 // ---------------------------- Input -------------------------- //
 // This method is called when keyboard event happens.
