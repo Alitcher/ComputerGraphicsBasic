@@ -177,7 +177,7 @@ GLuint createCube(glm::vec3 color) {
     GLuint vboHandle;
     glGenBuffers(1, &vboHandle);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboHandle);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLubyte) * 36, indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLfloat) * 36, indices, GL_STATIC_DRAW);
 
     return vertexArrayHandle;
 }
@@ -185,10 +185,12 @@ GLuint createCube(glm::vec3 color) {
 std::chrono::time_point<std::chrono::system_clock> start;
 std::chrono::time_point<std::chrono::system_clock> end;
 std::chrono::duration<double> elapsed_seconds;
+std::chrono::duration<double> deltaTime;
+double rotationAngle = 0.0;
 
 void drawChopper() {
 
-    float rotationAngleX = static_cast<float>(elapsed_seconds.count() * 2 * glm::pi<double>());
+    float rotationAngleX = static_cast<float>(rotationAngle * 2 * glm::pi<double>());
     float rotationAngleY = rotationAngleX; 
     std::stack<glm::mat4> ms; // this is matrix stack.
     ms.push(glm::mat4(1.0)); //Push an identity matrix to the bottom of stack
@@ -373,8 +375,9 @@ int main(int argc, char *argv[]) {
         glfwSwapBuffers(win);
         glfwPollEvents();
         end = std::chrono::system_clock::now();
-        elapsed_seconds = end - start;
-        usleep(1000);
+        deltaTime = end - start; // calculate deltaTime
+        rotationAngle += deltaTime.count(); // accumulate rotation angle
+        start = end;
     }
 
     glfwTerminate();
