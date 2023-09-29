@@ -211,9 +211,9 @@ void drawChopper() {
             ms.push(ms.top());
                 ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 4.0, 0.0));
                 ms.top() = glm::rotate(ms.top(), static_cast<float>(rotationAngleX), glm::vec3(0.0, 1.0, 0.0));
+                ms.top() = glm::scale(ms.top(),glm::vec3(5.0, 0.5, 2.0));
 
                 ms.push(ms.top());
-                    ms.top() = glm::scale(ms.top(),glm::vec3(5.0, 0.5, 2.0));
                     ms.top() = glm::translate(ms.top(), glm::vec3(-1.25, 0.0, 0.0));
                     shader.uniformMatrix4fv("modelMatrix", ms.top());
                     glBindVertexArray(firstBladeVAO);
@@ -221,7 +221,6 @@ void drawChopper() {
                 ms.pop();
                 
                 ms.push(ms.top());
-                    ms.top() = glm::scale(ms.top(),glm::vec3(5.0, 0.5, 2.0));
                     ms.top() = glm::translate(ms.top(), glm::vec3(1.25, 0.0, 0.0));
                     shader.uniformMatrix4fv("modelMatrix", ms.top());
                     glBindVertexArray(secondBladeVAO);
