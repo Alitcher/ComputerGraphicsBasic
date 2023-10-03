@@ -10,6 +10,7 @@
 #include <chrono>
 #include <iostream>
 #include "Camera.h"
+#include <memory>
 
 // --------------- Forward declarations ------------- //
 GLuint createWall(glm::vec3 color);
@@ -29,8 +30,11 @@ GLint translationLocation;
 GLint colorLocation;
 
 float fov = 80.0f; //In degrees
-float screenWidth = 800;
-float screenHeight = 450;
+GLint screenWidth = 800;
+GLint screenHeight = 450;
+float aspectRatio;
+
+std::shared_ptr<Camera> currentCamera;
 
 void initWalls() {
     leftWallVAO = createWall(glm::vec3(0.66, 0.66, 0.66));
@@ -229,24 +233,21 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
     if (action == GLFW_REPEAT || action == GLFW_PRESS) {
         if (key == GLFW_KEY_LEFT) {
-            std::cout << "Change the global fov, create a new perspective matrix, assign it to mainCamera->projection" << "\n";
-            // fov -= 1.0f;
-            // if (fov < 1.0f) {
-            //     fov = 1.0f;
-            // }
-            glm::mat4 newProjection = glm::perspective(glm::radians(fov), screenWidth / screenHeight, 0.1f, 100.f);
-            mainCamera->setProjection(newProjection);
-           // mainCamera.setsetProjection(glm::perspective(glm::radians(fov), aspectRatio, near, far));
+            fov -= 1.0f;
+            if (fov < 1.0f) {
+                fov = -80.0f;
+            }
+            //currentCamera = secondaryCamera;
         }
         if (key == GLFW_KEY_RIGHT) {
-            std::cout << "Change the global fov, create a new perspective matrix, assign it to mainCamera->projection" << "\n";
-            // fov += 1.0f;
-            // if (fov > 179.0f) {
-            //     fov = 179.0f;
-            // }
-            glm::mat4 newProjection = glm::perspective(glm::radians(fov), screenWidth / screenHeight, 0.1f, 100.f);
-            mainCamera->setProjection(newProjection);
+            fov += 1.0f;
+            if (fov > 179.0f) {
+                fov = 200.0f;
+            }
+            //currentCamera = mainCamera;
         }
+        glm::mat4 newProjection = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 100.f);
+        mainCamera->setProjection(newProjection);
     }
 }
 
@@ -265,6 +266,7 @@ void changeSecondaryCameraMode(int mode) {
             glm::vec3(0.0, 0.0, -1.0)
         ));
     } else {
+        // Look from the left
         secondaryCamera->setView(glm::lookAt(
             glm::vec3(-15.0, 0.0, 0.0),
             glm::vec3(0.0, 0.0, 0.0),
@@ -323,13 +325,18 @@ void drawHangar() {
 
 // ---------------------------- Main -------------------------- //
 int main(int argc, char *argv[]) {
+    aspectRatio = screenWidth / screenHeight;
+    float miniScreenWidth = screenWidth / 3;
+    float miniScreenHeight = screenHeight / 3;
+
+    GLint miniScreenPosX = screenWidth - miniScreenWidth;
     GLFWwindow *win;
 
     if (!glfwInit()) {
         exit (EXIT_FAILURE);
     }
 
-    win = glfwCreateWindow(640, 480, "Cube Chopper!", NULL, NULL);
+    win = glfwCreateWindow(screenWidth, screenHeight, "Cube Chopper!", NULL, NULL);
 
     if (!win) {
         glfwTerminate();
@@ -357,23 +364,25 @@ int main(int argc, char *argv[]) {
     shader.use();
 
     //Here we create the initial main camera
-    mainCamera = new Camera(
-        glm::perspective(glm::radians(fov), screenWidth / screenHeight, 0.1f, 100.f),
+    mainCamera = std::make_shared<Camera>(
+        glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 100.f),
         glm::lookAt(
-            glm::vec3(0.0, 4.0, 15.0), //Position
-            glm::vec3(0.0, 0.0, 0.0),  //LookAt
-            glm::vec3(0.0, 1.0, 0.0)   //Up
+            glm::vec3(0.0, 4.0, 15.0),
+            glm::vec3(0.0, 0.0, 0.0),
+            glm::vec3(0.0, 1.0, 0.0)
         )
     );
 
+    currentCamera = mainCamera;
+
     //Here we create the initial secondary camera
     float halfSize = 10.0f; //You may want to change this so that your chopper fits
-    secondaryCamera = new Camera(
+    secondaryCamera = std::make_shared<Camera>(
         glm::ortho(-halfSize, halfSize, -halfSize, halfSize, 0.1f, 100.f),
         glm::lookAt(
-            glm::vec3(0.0, 0.0, 15.0), //Position
-            glm::vec3(0.0, 0.0, 0.0),  //LookAt
-            glm::vec3(0.0, 1.0, 0.0)   //Up
+            glm::vec3(0.0, 0.0, 15.0),
+            glm::vec3(0.0, 0.0, 0.0),
+            glm::vec3(0.0, 1.0, 0.0)
         )
     );
 
@@ -388,21 +397,46 @@ int main(int argc, char *argv[]) {
     initChopper();
     initWalls();
 
-    //Turn on depth test, so the objects closer to the camera would
-    //be drawn in front of the objects further away.
     glEnable(GL_DEPTH_TEST);
-    //Enable back-face culling
     glEnable(GL_CULL_FACE);
+    glEnable(GL_SCISSOR_TEST); //Enable scissor testing
     glCullFace(GL_BACK);
-    //Clear our background to black
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
     start = std::chrono::system_clock::now();
+    currentCamera = mainCamera;
 
     while (!glfwWindowShouldClose(win)) {
+        /**
+         * --Task--
+         * Rendering flow would be the following:
+         * 1) Set the viewport with glViewport
+         * 2) Set the scissor area with glScissor
+         * 3) Clear the viewport with glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+         * 4) Send the correct projection and view matrices to the shader as uniforms:
+         *     - eg: shader.uniformMatrix4fv("projectionMatrix", ...)
+         * 5) Call drawScene()
+         *
+         * Do it for both the main and secondary camera.
+         */
 
+        glViewport(0,0, screenWidth, screenHeight);
+        glScissor(0,0, screenWidth, screenHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         shader.uniformMatrix4fv("projectionMatrix", mainCamera->getProjection());
         shader.uniformMatrix4fv("viewMatrix", mainCamera->getView());
+        drawHangar();
+        drawChopper();
+
+
+        glViewport(miniScreenPosX,0, miniScreenWidth, miniScreenHeight);
+        glScissor(miniScreenPosX,0, miniScreenWidth, miniScreenHeight);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        shader.uniformMatrix4fv("projectionMatrix", secondaryCamera->getProjection());
+        shader.uniformMatrix4fv("viewMatrix", secondaryCamera->getView());
 
         drawHangar();
         drawChopper();
@@ -424,9 +458,6 @@ int main(int argc, char *argv[]) {
         rotationAngle += deltaTime.count(); // accumulate rotation angle
         start = end;
     }
-
-    delete mainCamera;
-    delete secondaryCamera;
 
     glfwTerminate();
     exit(EXIT_SUCCESS);
