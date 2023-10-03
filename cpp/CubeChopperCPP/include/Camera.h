@@ -1,6 +1,7 @@
 #ifndef ALITCH_CAMERA_H
 #define ALITCH_CAMERA_H
 #include <glm/glm.hpp>
+#include <memory>
 
 class Camera
 {
@@ -18,7 +19,8 @@ public:
     void setView(const glm::mat4& in_view);
 };
 
-extern Camera* mainCamera;     // Pointer to our main (perspective) camera
-extern Camera* secondaryCamera; // Pointer to our secondary (orthographic) camera
+extern std::shared_ptr<Camera> mainCamera;     // Smart pointer to main camera
+extern std::shared_ptr<Camera> secondaryCamera; // Smart pointer to secondary camera
+
 
 #endif
