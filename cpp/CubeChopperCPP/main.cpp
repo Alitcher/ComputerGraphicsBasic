@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>      // OpenGL math library
 #include "shader_util.h"    // Utility methods to keep this file a bit shorter.
 #include <chrono>
+#include <iostream>
 // --------------- Forward declarations ------------- //
 GLuint createWall(glm::vec3 color);
 GLuint createCube(glm::vec3 color);
@@ -19,6 +20,9 @@ GLuint cubeVAO;
 GLuint leftWallVAO, rightWallVAO, backWallVAO, ceilingVAO, floorVAO;
 GLuint chopperVAO, firstBladeVAO, secondBladeVAO;
 
+GLuint shaderProgram;
+GLint translationLocation;
+GLint colorLocation;
 /**
 *   *Implement the methods: initChopper, createCube and drawChopper. Read the
 *   comments for guidelines and explanation. There exist very similar methods
@@ -160,12 +164,33 @@ GLuint createCube(glm::vec3 color) {
         1, 6, 2  // Right face 2nd triangle
     };
 
-        GLfloat colors[24]; // 8 vertices x 3 color values
-    for(int i = 0; i < 24; i+=3) {
-        colors[i] = color[0];
-        colors[i+1] = color[1];
-        colors[i+2] = color[2];
-    }
+    glm::vec3 lightColor = glm::vec3(1.0f, 0.98f, 0.73f); // some yellow
+    glm::vec3 darkColor = glm::vec3(0.24f, 0.15f, 0.325f); // some purple
+
+    float blendFactor = 0.5f; 
+    glm::vec3 blendedLightColor = lightColor * blendFactor + color * (1 - blendFactor);
+    glm::vec3 blendedDarkColor = darkColor * blendFactor + color * (1 - blendFactor);
+
+    GLfloat colors[] = {
+        blendedLightColor.x, blendedLightColor.y, blendedLightColor.z, // 0
+        blendedLightColor.x, blendedLightColor.y, blendedLightColor.z, // 1
+        blendedLightColor.x, blendedLightColor.y, blendedLightColor.z, // 2
+        blendedLightColor.x, blendedLightColor.y, blendedLightColor.z, // 3
+
+        blendedDarkColor.x, blendedDarkColor.y, blendedDarkColor.z, // 4
+        blendedDarkColor.x, blendedDarkColor.y, blendedDarkColor.z, // 5
+        blendedDarkColor.x, blendedDarkColor.y, blendedDarkColor.z, // 6
+        blendedDarkColor.x, blendedDarkColor.y, blendedDarkColor.z  // 7
+    };
+
+
+    // GLfloat colors[24]; // 8 vertices x 3 color values
+    // for(int i = 0; i < 24; i+=3) {
+    //     colors[i] = color[0];
+    //     colors[i+1] = color[1];
+    //     colors[i+2] = color[2];
+    // }
+
 
         GLuint vertexArrayHandle;
     glGenVertexArrays(1, &vertexArrayHandle);
@@ -173,6 +198,8 @@ GLuint createCube(glm::vec3 color) {
 
     shader.attribute3fv("position", vertices, 36);
     shader.attribute3fv("color", colors, 36);
+//shader.attribute3fv("color", colors, 24); // 8 vertices * 3 values per vertex
+
 
     GLuint vboHandle;
     glGenBuffers(1, &vboHandle);
