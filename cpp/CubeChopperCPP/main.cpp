@@ -34,8 +34,6 @@ GLint screenWidth = 800;
 GLint screenHeight = 450;
 float aspectRatio;
 
-std::shared_ptr<Camera> currentCamera;
-
 void initWalls() {
     leftWallVAO = createWall(glm::vec3(0.66, 0.66, 0.66));
     rightWallVAO = createWall(glm::vec3(0.4, 0.4, 0.4));
@@ -253,6 +251,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 void changeSecondaryCameraMode(int mode) {
     if (1 == mode) {
+        //std::cout << "Look from the front" << "\n";
         secondaryCamera->getView() = glm::lookAt(
             glm::vec3(0.0, 0.0, 15.0), //Position
             glm::vec3(0.0, 0.0, 0.0),  //LookAt
@@ -260,6 +259,7 @@ void changeSecondaryCameraMode(int mode) {
         );
     } else if (2 == mode) {
         // Look from the top
+        //std::cout << "Look from the top" << "\n";
         secondaryCamera->setView(glm::lookAt(
             glm::vec3(0.0, 15.0, 0.0),
             glm::vec3(0.0, 0.0, 0.0),
@@ -267,6 +267,7 @@ void changeSecondaryCameraMode(int mode) {
         ));
     } else {
         // Look from the left
+        //std::cout << "Look from the left" << "\n";
         secondaryCamera->setView(glm::lookAt(
             glm::vec3(-15.0, 0.0, 0.0),
             glm::vec3(0.0, 0.0, 0.0),
@@ -373,8 +374,6 @@ int main(int argc, char *argv[]) {
         )
     );
 
-    currentCamera = mainCamera;
-
     //Here we create the initial secondary camera
     float halfSize = 10.0f; //You may want to change this so that your chopper fits
     secondaryCamera = std::make_shared<Camera>(
@@ -405,7 +404,6 @@ int main(int argc, char *argv[]) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     start = std::chrono::system_clock::now();
-    currentCamera = mainCamera;
 
     while (!glfwWindowShouldClose(win)) {
         /**
