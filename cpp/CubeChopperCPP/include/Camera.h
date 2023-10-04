@@ -20,7 +20,7 @@ public:
 };
 
 extern std::shared_ptr<Camera> mainCamera;     // Smart pointer to main camera
-extern std::shared_ptr<Camera> secondaryCamera; // Smart pointer to secondary camera
+//extern std::shared_ptr<Camera> secondaryCamera; // Smart pointer to secondary camera
 
 
 #endif

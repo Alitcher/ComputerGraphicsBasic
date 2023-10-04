@@ -22,7 +22,7 @@ void changeSecondaryCameraMode(int mode);
 shader_prog shader("chopper.vert.glsl", "chopper.frag.glsl");
 
 GLuint cubeVAO;
-GLuint leftWallVAO, rightWallVAO, backWallVAO, ceilingVAO, floorVAO;
+GLuint floorVAO;
 GLuint chopperVAO, firstBladeVAO, secondBladeVAO;
 
 GLuint shaderProgram;
@@ -35,20 +35,17 @@ GLint screenHeight = 450;
 float aspectRatio;
 
 void initWalls() {
-    leftWallVAO = createWall(glm::vec3(0.66, 0.66, 0.66));
-    rightWallVAO = createWall(glm::vec3(0.4, 0.4, 0.4));
-    backWallVAO = createWall(glm::vec3(0.52, 0.52, 0.52));
-    ceilingVAO = createWall(glm::vec3(0.33, 0.33, 0.33));
     floorVAO = createWall(glm::vec3(0.22, 0.22, 0.22));
+}
+
+void initChopper() {
+chopperVAO = createCube(glm::vec3(1.0f, 0.35f, 0.2f)); 
+firstBladeVAO = secondBladeVAO = createCube(glm::vec3(0.65f, 0.78f, 0.97f));
 }
 
 GLuint createWall(glm::vec3 color) {
     float s = 10.0;
-    /**
-    * We start by creating arrays of the data, which we will later send to OpenGL.
-    */
 
-    //In this array we define coordinates for the corners of the walls.
     GLfloat vertices[] = {
                             -s, -s, 0.0,
                              s, -s, 0.0,
@@ -56,14 +53,11 @@ GLuint createWall(glm::vec3 color) {
                             -s,  s, 0.0
                         };
 
-    //In this array we define faces for the triangles within the walls.
-    //Each set of three vertices defines one triangle.
     GLubyte indices[] = {
                             0, 1, 2,
                             0, 2, 3
                         };
 
-    //Colors for the 4 vertices
     GLfloat colors[] = {
                             color[0], color[1], color[2],
                             color[0], color[1], color[2],
@@ -75,29 +69,14 @@ GLuint createWall(glm::vec3 color) {
     glGenVertexArrays(1, &vertexArrayHandle);
     glBindVertexArray(vertexArrayHandle);
 
-    //Here we set up VBO-s for coordinates and colors of the vertices.
     shader.attribute3fv("position", vertices, 12);
     shader.attribute3fv("color", colors, 12);
 
-    // First step. We create a handle for our buffer
     GLuint vboHandle;
     glGenBuffers(1, &vboHandle);
-    // Second step. We bind (activate) this buffer for the OpenGL state machine.
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboHandle);
-    // Third step. We store the vertex indexes in the VBO.
-    // These define the faces of the triangles, which make up the cube/
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLfloat)*12, indices, GL_STATIC_DRAW);
-    //We return handle to vertex array. Step 4 takes place in method drawHangar.
-    //Step 5 we skip, as all our assets have the same lifetime as rest of the program.
     return vertexArrayHandle;
-}
-
-/**
- * Use this method to initialize the 3 components of your chopper
-*/
-void initChopper() {
-chopperVAO = createCube(glm::vec3(1.0f, 0.35f, 0.2f)); 
-firstBladeVAO = secondBladeVAO = createCube(glm::vec3(0.65f, 0.78f, 0.97f));
 }
 
 GLuint createCube(glm::vec3 color) {
@@ -159,8 +138,6 @@ GLuint createCube(glm::vec3 color) {
 
     shader.attribute3fv("position", vertices, 36);
     shader.attribute3fv("color", colors, 36);
-//shader.attribute3fv("color", colors, 24); // 8 vertices * 3 values per vertex
-
 
     GLuint vboHandle;
     glGenBuffers(1, &vboHandle);
@@ -183,8 +160,6 @@ void drawChopper() {
     std::stack<glm::mat4> ms; // this is matrix stack.
     ms.push(glm::mat4(1.0)); //Push an identity matrix to the bottom of stack
         ms.push(ms.top());
-            // ms.top() = glm::rotate(ms.top(), glm::radians(static_cast<float>(rotationAngleY)), glm::vec3(0.0, 1.0, 0.0));
-            // ms.top() = glm::rotate(ms.top(), glm::radians(static_cast<float>(rotationAngleX)), glm::vec3(1.0, 0.0, 0.0));
         
             ms.push(ms.top());
 
@@ -220,11 +195,6 @@ void drawChopper() {
 
 }
 
-
-
-// ---------------------------- Input -------------------------- //
-// This method is called when keyboard event happens.
-// Sets GLFW window should close flag to true, when escape key is pressed.
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
@@ -235,44 +205,15 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
             if (fov < 1.0f) {
                 fov = -80.0f;
             }
-            //currentCamera = secondaryCamera;
         }
         if (key == GLFW_KEY_RIGHT) {
             fov += 1.0f;
             if (fov > 179.0f) {
                 fov = 200.0f;
             }
-            //currentCamera = mainCamera;
         }
         glm::mat4 newProjection = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 100.f);
         mainCamera->setProjection(newProjection);
-    }
-}
-
-void changeSecondaryCameraMode(int mode) {
-    if (1 == mode) {
-        //std::cout << "Look from the front" << "\n";
-        secondaryCamera->getView() = glm::lookAt(
-            glm::vec3(0.0, 0.0, 15.0), //Position
-            glm::vec3(0.0, 0.0, 0.0),  //LookAt
-            glm::vec3(0.0, 1.0, 0.0)   //Up
-        );
-    } else if (2 == mode) {
-        // Look from the top
-        //std::cout << "Look from the top" << "\n";
-        secondaryCamera->setView(glm::lookAt(
-            glm::vec3(0.0, 15.0, 0.0),
-            glm::vec3(0.0, 0.0, 0.0),
-            glm::vec3(0.0, 0.0, -1.0)
-        ));
-    } else {
-        // Look from the left
-        //std::cout << "Look from the left" << "\n";
-        secondaryCamera->setView(glm::lookAt(
-            glm::vec3(-15.0, 0.0, 0.0),
-            glm::vec3(0.0, 0.0, 0.0),
-            glm::vec3(0.0, 1.0, 0.0)
-        ));
     }
 }
 
@@ -280,44 +221,12 @@ void drawHangar() {
     std::stack<glm::mat4> ms; // this is matrix stack.
     ms.push(glm::mat4(1.0)); //Push an identity matrix to the bottom of stack
 
-        ms.push(ms.top());
-            ms.top() = glm::rotate(ms.top(), glm::radians(90.0f), glm::vec3(0.0, 1.0, 0.0));
-            ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 0.0, -10.0));
-            // Send the current model matrix at the top of stack to the vertex shader.
-            shader.uniformMatrix4fv("modelMatrix", ms.top());
-            // Bind a vertex array to the current OpenGL context
-            glBindVertexArray(leftWallVAO);
-
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);
-            // Pop back to last model matrix. This doesn't have the scaling, rotation and translation,
-            // which were added after the last push.
-        ms.pop();
-        ms.push(ms.top()); //Right wall
-            ms.top() = glm::rotate(ms.top(), glm::radians(-90.0f), glm::vec3(0.0, 1.0, 0.0));
-            ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 0.0, -10.0));
-            shader.uniformMatrix4fv("modelMatrix", ms.top());
-            glBindVertexArray(rightWallVAO);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);
-        ms.pop();
         ms.push(ms.top()); //Floor
             ms.top() = glm::rotate(ms.top(), glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
             ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 0.0, -10.0));
 
             shader.uniformMatrix4fv("modelMatrix", ms.top());
             glBindVertexArray(floorVAO);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);
-        ms.pop();
-        ms.push(ms.top()); //Ceiling
-            ms.top() = glm::rotate(ms.top(), glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
-            ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 0.0, -10.0));
-            shader.uniformMatrix4fv("modelMatrix", ms.top());
-            glBindVertexArray(ceilingVAO);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);
-        ms.pop();
-        ms.push(ms.top()); //Back wall
-            ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 0.0, -10.0));
-            shader.uniformMatrix4fv("modelMatrix", ms.top());
-            glBindVertexArray(backWallVAO);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);
         ms.pop();
 
@@ -327,11 +236,10 @@ void drawHangar() {
 // ---------------------------- Main -------------------------- //
 int main(int argc, char *argv[]) {
     aspectRatio = screenWidth / screenHeight;
-    float miniScreenWidth = screenWidth / 3;
-    float miniScreenHeight = screenHeight / 3;
 
-    GLint miniScreenPosX = screenWidth - miniScreenWidth;
     GLFWwindow *win;
+    GLenum error = glGetError();
+
 
     if (!glfwInit()) {
         exit (EXIT_FAILURE);
@@ -374,31 +282,12 @@ int main(int argc, char *argv[]) {
         )
     );
 
-    //Here we create the initial secondary camera
-    float halfSize = 10.0f; //You may want to change this so that your chopper fits
-    secondaryCamera = std::make_shared<Camera>(
-        glm::ortho(-halfSize, halfSize, -halfSize, halfSize, 0.1f, 100.f),
-        glm::lookAt(
-            glm::vec3(0.0, 0.0, 15.0),
-            glm::vec3(0.0, 0.0, 0.0),
-            glm::vec3(0.0, 1.0, 0.0)
-        )
-    );
-
-    glm::mat4 view = glm::lookAt(
-        glm::vec3(0.0, 6.0, 15.0), //Position
-        glm::vec3(0.0, 0.0, 0.0),  //LookAt
-        glm::vec3(0.0, 1.0, 0.0)   //Up
-    );
-    //shader.uniformMatrix4fv("projectionMatrix", projection);
-    shader.uniformMatrix4fv("viewMatrix", view);
-
     initChopper();
     initWalls();
 
+    glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glEnable(GL_SCISSOR_TEST); //Enable scissor testing
     glCullFace(GL_BACK);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -406,21 +295,8 @@ int main(int argc, char *argv[]) {
     start = std::chrono::system_clock::now();
 
     while (!glfwWindowShouldClose(win)) {
-        /**
-         * --Task--
-         * Rendering flow would be the following:
-         * 1) Set the viewport with glViewport
-         * 2) Set the scissor area with glScissor
-         * 3) Clear the viewport with glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-         * 4) Send the correct projection and view matrices to the shader as uniforms:
-         *     - eg: shader.uniformMatrix4fv("projectionMatrix", ...)
-         * 5) Call drawScene()
-         *
-         * Do it for both the main and secondary camera.
-         */
 
         glViewport(0,0, screenWidth, screenHeight);
-        glScissor(0,0, screenWidth, screenHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shader.uniformMatrix4fv("projectionMatrix", mainCamera->getProjection());
@@ -428,33 +304,16 @@ int main(int argc, char *argv[]) {
         drawHangar();
         drawChopper();
 
-
-        glViewport(miniScreenPosX,0, miniScreenWidth, miniScreenHeight);
-        glScissor(miniScreenPosX,0, miniScreenWidth, miniScreenHeight);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        shader.uniformMatrix4fv("projectionMatrix", secondaryCamera->getProjection());
-        shader.uniformMatrix4fv("viewMatrix", secondaryCamera->getView());
-
-        drawHangar();
-        drawChopper();
-
-        //This calls the changeSecondaryCameraMode with a different parameter every 3 seconds.
-        float timeSwitch = fmod(glfwGetTime(), 9.0f);
-        if (timeSwitch < 3) {
-            changeSecondaryCameraMode(0);
-        } else if (timeSwitch < 6) {
-            changeSecondaryCameraMode(1);
-        } else {
-            changeSecondaryCameraMode(2);
-        }
-
         glfwSwapBuffers(win);
         glfwPollEvents();
         end = std::chrono::system_clock::now();
         deltaTime = end - start; // calculate deltaTime
         rotationAngle += deltaTime.count(); // accumulate rotation angle
         start = end;
+        if (error != GL_NO_ERROR) {
+            // Handle the OpenGL error, log it, or print an error message.
+            fprintf(stderr, "OpenGL error: %d\n", error);
+        }
     }
 
     glfwTerminate();

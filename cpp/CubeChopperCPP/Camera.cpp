@@ -24,4 +24,4 @@ void Camera::setView(const glm::mat4& in_view) {
 }
 
 std::shared_ptr<Camera> mainCamera = nullptr;
-std::shared_ptr<Camera> secondaryCamera = nullptr;
+//std::shared_ptr<Camera> secondaryCamera = nullptr;
