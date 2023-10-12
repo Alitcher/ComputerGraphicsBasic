@@ -30,8 +30,10 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="Camera.cpp" />
 		<Unit filename="chopper.frag.glsl" />
 		<Unit filename="chopper.vert.glsl" />
+		<Unit filename="include/Camera.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="shader_util.cpp" />
 		<Unit filename="shader_util.h" />
