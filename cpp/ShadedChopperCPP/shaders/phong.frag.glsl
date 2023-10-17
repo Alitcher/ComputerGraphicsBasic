@@ -23,11 +23,16 @@ void main(void) {
     // Calculate the light direction
     vec3 L = normalize(lightPosition - interpolatedPosition);
 
-    // Calculate the reflection direction
-    vec3 R = reflect(-L, N);
-
     // Calculate the view direction
     vec3 V = normalize(-interpolatedPosition);
+
+    // Calculate the reflection direction
+    //vec3 R = reflect(-L, N);
+
+    // Calculate the half-angle vector
+    vec3 H = normalize(L + V);
+
+
 
     // Ambient term
     vec3 ambient = 0.1 * interpolatedColor; // Assuming 10% ambient light
@@ -36,10 +41,13 @@ void main(void) {
     float diff = max(dot(N, L), 0.0);
     vec3 diffuse = diff * interpolatedColor;
 
-    // Specular term
-    float spec = pow(max(dot(R, V), 0.0), 200.0); // Using 200 as shininess value
-    vec3 specular = spec * vec3(1.0, 1.0, 1.0); // White specular color
+    //Phong Specular term
+    //float spec = pow(max(dot(R, V), 0.0), 200.0); // Using 200 as shininess value
 
+    // Blinn-Phong Specular term
+    float spec = pow(max(dot(H, N), 0.0), 200.0);
+
+    vec3 specular = spec * vec3(1.0, 1.0, 1.0); // White specular color
 
     vec3 color = ambient + diffuse + specular; //Assign your calculation here instead
 
