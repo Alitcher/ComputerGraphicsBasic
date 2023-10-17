@@ -21,6 +21,11 @@ void main(void) {
      * --Task--
      * Find the correct values for the position and the normal in camera space.
      */
+    // Transforming the vertex position from local space to camera space
+    interpolatedPosition = vec3(modelViewMatrix * vec4(position, 1.0));
+
+    // Transforming the normal to camera space
+    interpolatedNormal = normalize(normalMatrix * normal);
 
     interpolatedColor = color; //Color we just pass along
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
