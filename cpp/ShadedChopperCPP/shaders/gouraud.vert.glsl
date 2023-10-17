@@ -35,4 +35,31 @@ void main(void) {
      *   Use a value like 200 for the shininess
      */
 
+     // 1. Calculate the vertexPosition in the camera space.
+     // 2. Calculate the correct normal in the camera space.
+     // 3. Find the direction towards the viewer, normalize.
+     // 4. Find the direction towards the light source, normalize.
+    vec3 vertexPosition = vec3(modelViewMatrix * vec4(position,1.0));
+    vec3 correctedNormal = normalize(normalMatrix * normal);
+    vec3 viewDirection = normalize(-vertexPosition);
+    vec3 lightDirection = normalize(lightPosition - vertexPosition);
+
+    vec3 ambient = color * 0.1; // Assuming 10% ambient light
+
+    // Diffuse/Lambertian term
+    float diffuseValue = max(dot(correctedNormal, lightDirection), 0.0);
+    vec3 diffuse = diffuseValue * color;
+
+    vec3 reflectionDirection = reflect(-lightDirection, correctedNormal);
+
+    float clampedDotProduct = max(dot(viewDirection, reflectionDirection),0.0);
+
+
+    float powDot = pow(clampedDotProduct, 200.0);
+
+    vec3 specular = powDot * vec3(1.0, 1.0, 1.0); // White specular highlights
+
+    // Combining the results
+    interpolatedColor = ambient + diffuse + specular;
+    interpolatedNormal = correctedNormal;
 }
