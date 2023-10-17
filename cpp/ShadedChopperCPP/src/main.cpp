@@ -50,8 +50,9 @@ void initWalls() {
  * Use createSphere for the chopper's body.
  */
 void initChopper() {
-    cubeVAO = createCube(glm::vec3(1.0f, 0.0f, 0.0f));
-    sphereVAO = createSphere(1.0f, 8, 6, glm::vec3(1.0, 0.0, 0.0), chopperBodyTriangleCount);
+    chopperVAO = cubeVAO = createCube(glm::vec3(1.0f, 0.35f, 0.2f));
+    firstBladeVAO = secondBladeVAO = createCube(glm::vec3(0.65f, 0.78f, 0.97f));
+    sphereVAO = createSphere(1.0f, 8, 6, glm::vec3(1.0f, 0.35f, 0.2f), chopperBodyTriangleCount);
 }
 
 /**
@@ -326,32 +327,47 @@ std::chrono::time_point<std::chrono::system_clock> start;
 std::chrono::time_point<std::chrono::system_clock> end;
 std::chrono::duration<double> elapsed_seconds;
 std::chrono::duration<double> deltaTime;
+
 double rotationAngle = 0.0;
 
 void drawChopper() {
+    float rotationAngleX = static_cast<float>(rotationAngle * 2 * glm::pi<double>());
+    float rotationAngleY = rotationAngleX;
+
     std::stack<glm::mat4> ms;
     ms.push(glm::mat4(1.0));
 
-//    ms.push(ms.top());
-//        ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 4.0, 0.0));
-//        ms.top() = glm::rotate(ms.top(), 0.2f * (float)fmod(glfwGetTime(), 360.0), glm::vec3(0.0f, 1.0f, 0.0f));
-//        ms.top() = glm::rotate(ms.top(), 0.5f * (float)fmod(glfwGetTime(), 360.0), glm::vec3(1.0f, 0.0f, 0.0f));
-//        ms.top() = glm::scale(ms.top(), glm::vec3(2.0, 2.0, 2.0));
-//        shader.uniformMatrix4fv("modelMatrix", ms.top());
-//        glBindVertexArray(cubeVAO);
-//        glDrawArrays(GL_TRIANGLES, 0, 36); //Here we draw arrays, the data does not have indexed faces
-//    ms.pop();
+        ms.push(ms.top());
+            ms.top() = glm::translate(ms.top(), glm::vec3(0.0, -4.0, 0.0));
+            ms.top() = glm::scale(ms.top(),glm::vec3(6.0, 2.5, 3.5));
+            shader.uniformMatrix4fv("modelMatrix", ms.top());
+            glBindVertexArray(sphereVAO);
+            glDrawElements(GL_TRIANGLES, chopperBodyTriangleCount * 3, GL_UNSIGNED_SHORT, 0); //The usual indexed faces drawing
+        ms.pop();
 
-    ms.push(ms.top());
-        ms.top() = glm::translate(ms.top(), glm::vec3(0.0, -4.0, 0.0));
-        ms.top() = glm::rotate(ms.top(), 0.2f * (float)fmod(glfwGetTime(), 360.0), glm::vec3(0.0f, 1.0f, 0.0f));
-        ms.top() = glm::rotate(ms.top(), 0.5f * (float)fmod(glfwGetTime(), 360.0), glm::vec3(1.0f, 0.0f, 0.0f));
-        ms.top() = glm::scale(ms.top(), glm::vec3(8.0, 4.0, 8.0));
-        shader.uniformMatrix4fv("modelMatrix", ms.top());
-        glBindVertexArray(sphereVAO);
-        glDrawElements(GL_TRIANGLES, chopperBodyTriangleCount * 3, GL_UNSIGNED_SHORT, 0); //The usual indexed faces drawing
+        ms.push(ms.top());
+            ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 0.0, 0.0));
+            ms.top() = glm::rotate(ms.top(), static_cast<float>(rotationAngleX), glm::vec3(0.0, 1.0, 0.0));
+            ms.top() = glm::scale(ms.top(),glm::vec3(4.0, 0.5, 1.5));
+
+            ms.push(ms.top());
+                ms.top() = glm::translate(ms.top(), glm::vec3(-1.25, 0.0, 0.0));
+                ms.top() = glm::scale(ms.top(),glm::vec3(1.0, 1.0, 1.0));
+                shader.uniformMatrix4fv("modelMatrix", ms.top());
+                glBindVertexArray(firstBladeVAO);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            ms.pop();
+
+            ms.push(ms.top());
+                ms.top() = glm::translate(ms.top(), glm::vec3(1.25, 0.0, 0.0));
+                ms.top() = glm::scale(ms.top(),glm::vec3(-1.0, -1.0, 1.0));
+                shader.uniformMatrix4fv("modelMatrix", ms.top());
+                glBindVertexArray(secondBladeVAO);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            ms.pop();
+
+        ms.pop();
     ms.pop();
-
 
 }
 
@@ -393,8 +409,8 @@ int main(int argc, char *argv[]) {
         exit (EXIT_FAILURE);
     }
 
-    float screenWidth = 800;
-    float screenHeight = 450;
+    float screenWidth = 1600;
+    float screenHeight = 900;
     win = glfwCreateWindow(screenWidth, screenHeight, "Shaders", NULL, NULL);
 
     if (!win) {
@@ -443,6 +459,7 @@ int main(int argc, char *argv[]) {
     glCullFace(GL_BACK);
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 
+    start = std::chrono::system_clock::now();
     while (!glfwWindowShouldClose(win)) {
         light.x = 6.0f * sin(glfwGetTime()); //Move our light on a trajectory
         light.y = 5.0f * sin(glfwGetTime());
