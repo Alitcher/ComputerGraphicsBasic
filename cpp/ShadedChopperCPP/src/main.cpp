@@ -9,7 +9,7 @@
 #include <GLFW/glfw3.h>     // Windows and input
 #include <glm/glm.hpp>      // OpenGL math library
 #include "shader_util.h"    // Utility methods to keep this file a bit shorter.
-
+#include <chrono>
 #include <iostream>
 
 
@@ -321,28 +321,38 @@ GLuint createCube(glm::vec3 color) {
  * Currently draws a cube and a sphere.
  * Copy the chopper's drawing from the previous task, but be sure to call the correct draw calls!
  */
+
+std::chrono::time_point<std::chrono::system_clock> start;
+std::chrono::time_point<std::chrono::system_clock> end;
+std::chrono::duration<double> elapsed_seconds;
+std::chrono::duration<double> deltaTime;
+double rotationAngle = 0.0;
+
 void drawChopper() {
     std::stack<glm::mat4> ms;
     ms.push(glm::mat4(1.0));
 
-    ms.push(ms.top());
-        ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 4.0, 0.0));
-        ms.top() = glm::rotate(ms.top(), 0.2f * (float)fmod(glfwGetTime(), 360.0), glm::vec3(0.0f, 1.0f, 0.0f));
-        ms.top() = glm::rotate(ms.top(), 0.5f * (float)fmod(glfwGetTime(), 360.0), glm::vec3(1.0f, 0.0f, 0.0f));
-        ms.top() = glm::scale(ms.top(), glm::vec3(2.0, 2.0, 2.0));
-        shader.uniformMatrix4fv("modelMatrix", ms.top());
-        glBindVertexArray(cubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36); //Here we draw arrays, the data does not have indexed faces
-    ms.pop();
+//    ms.push(ms.top());
+//        ms.top() = glm::translate(ms.top(), glm::vec3(0.0, 4.0, 0.0));
+//        ms.top() = glm::rotate(ms.top(), 0.2f * (float)fmod(glfwGetTime(), 360.0), glm::vec3(0.0f, 1.0f, 0.0f));
+//        ms.top() = glm::rotate(ms.top(), 0.5f * (float)fmod(glfwGetTime(), 360.0), glm::vec3(1.0f, 0.0f, 0.0f));
+//        ms.top() = glm::scale(ms.top(), glm::vec3(2.0, 2.0, 2.0));
+//        shader.uniformMatrix4fv("modelMatrix", ms.top());
+//        glBindVertexArray(cubeVAO);
+//        glDrawArrays(GL_TRIANGLES, 0, 36); //Here we draw arrays, the data does not have indexed faces
+//    ms.pop();
+
     ms.push(ms.top());
         ms.top() = glm::translate(ms.top(), glm::vec3(0.0, -4.0, 0.0));
         ms.top() = glm::rotate(ms.top(), 0.2f * (float)fmod(glfwGetTime(), 360.0), glm::vec3(0.0f, 1.0f, 0.0f));
         ms.top() = glm::rotate(ms.top(), 0.5f * (float)fmod(glfwGetTime(), 360.0), glm::vec3(1.0f, 0.0f, 0.0f));
-        ms.top() = glm::scale(ms.top(), glm::vec3(4.0, 4.0, 4.0));
+        ms.top() = glm::scale(ms.top(), glm::vec3(8.0, 4.0, 8.0));
         shader.uniformMatrix4fv("modelMatrix", ms.top());
         glBindVertexArray(sphereVAO);
         glDrawElements(GL_TRIANGLES, chopperBodyTriangleCount * 3, GL_UNSIGNED_SHORT, 0); //The usual indexed faces drawing
     ms.pop();
+
+
 }
 
 void changeShader(int shaderID) {
@@ -449,6 +459,10 @@ int main(int argc, char *argv[]) {
         glfwSwapBuffers(win);
         usleep(10000);
         glfwPollEvents();
+        end = std::chrono::system_clock::now();
+        deltaTime = end - start; // calculate deltaTime
+        rotationAngle += deltaTime.count(); // accumulate rotation angle
+        start = end;
     }
 
     glfwTerminate();
