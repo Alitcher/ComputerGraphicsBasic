@@ -11,6 +11,11 @@ in vec3 interpolatedColor;
 // in the main program using glBindFragDataLocation
 out vec4 fragColor;
 
+vec3 GammaCorrect(vec3 color, float gamma)
+{
+    return pow(color, vec3(gamma));
+}
+
 void main(void) {
 
     /**
@@ -33,11 +38,7 @@ void main(void) {
     vec3 H = normalize(L + V);
 
 
-
-    // Ambient term
     vec3 ambient = 0.1 * interpolatedColor; // Assuming 10% ambient light
-
-    // Diffuse term
     float diff = max(dot(N, L), 0.0);
     vec3 diffuse = diff * interpolatedColor;
 
@@ -46,11 +47,16 @@ void main(void) {
 
     // Blinn-Phong Specular term
     float spec = pow(max(dot(H, N), 0.0), 200.0);
-
     vec3 specular = spec * vec3(1.0, 1.0, 1.0); // White specular color
 
-    vec3 color = ambient + diffuse + specular; //Assign your calculation here instead
+    // Decode the interpolated color from gamma space to linear space
+    vec3 decodedColor = GammaCorrect(interpolatedColor, 2.2); // Convert from gamma space to linear space
 
-    fragColor = vec4(color, 1.0);
+    // Perform lighting calculations using the decoded color
+    vec3 colorLinearSpace = ambient + diffuse * decodedColor + specular;
+
+    // Encode the final color back to gamma space before writing to the output
+    vec3 colorGammaSpace = GammaCorrect(colorLinearSpace, 1.0 / 2.2);  // Convert from linear space to gamma space
+    fragColor = vec4(colorGammaSpace, 1.0);
 
 }
