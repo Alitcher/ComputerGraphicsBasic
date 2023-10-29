@@ -10,7 +10,7 @@ in vec3 position;
 in vec3 normal;
 in vec2 uv;
 
-uniform vec2 uvScale;
+uniform vec2 uvScale = vec2(2.0, 2.0);
 
 out vec3 interpolatedNormal;
 out vec3 interpolatedPosition;
