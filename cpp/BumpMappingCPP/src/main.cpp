@@ -76,16 +76,27 @@ GLuint createQuad(float width, shader_prog* shader) {
  * Draws the scene (quad and light)
  */
 void drawScene() {
-    float speed = 0.50f;
+        float speed = 0.50f;
     std::stack<glm::mat4> ms;
     ms.push(glm::mat4(1.0));
 
     ms.push(ms.top()); //Textured quad
+        // Obtain oscillation value between -1 and 1
+        float timeValue = glfwGetTime() * speed;
+        float oscillation = cos(timeValue);
+
+        // Convert oscillation to rotation angle in range [-45, 45] degrees
+        float rotationAngle = 45.0f * oscillation;
+
+        // Rotate the model matrix around the y-axis by rotationAngle degrees
+        ms.top() = glm::rotate(ms.top(), glm::radians(rotationAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+
         /**
          * --Task--
          * Make the plane rotate in the range [-45, 45] degrees around the y axis
          * Use a cosine function for interpolation.
          */
+
         shader.uniformMatrix4fv("modelMatrix", ms.top());
 
         //Bind the first texture
