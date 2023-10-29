@@ -13,8 +13,36 @@ in vec2 interpolatedUv;
 void main(void) {
     mat3 normalMatrix = transpose(inverse(mat3(viewMatrix * modelMatrix))); //You will need this here.
                                                                             //Now I guess it would be better to send it as an uniform...
+    float stepSize = 0.01; // You might need to adjust this value for different bump maps
+
+    // 1. Gradient Vector Calculation
+    float left = texture2D(bumpTexture, interpolatedUv - vec2(stepSize, 0)).r;
+    float right = texture2D(bumpTexture, interpolatedUv + vec2(stepSize, 0)).r;
+    float down = texture2D(bumpTexture, interpolatedUv - vec2(0, stepSize)).r;
+    float up = texture2D(bumpTexture, interpolatedUv + vec2(0, stepSize)).r;
+    vec2 gradient = vec2(right - left, up - down);
+
+
+    // 2. Normal Modification
+    vec3 normalShift = vec3(gradient, 0.0);
+    normalShift = transpose(inverse(mat3(viewMatrix * modelMatrix))) * normalShift;
+    vec3 bumpedNormal = normalize(interpolatedNormal - normalShift);
 
     //If you want to test with directional light, you could specify a light source direction here like: vec3 l = normalize(vec3(1.0, 1.0, 1.0));
+    // 3. Texture UV Modification
+    vec2 bumpedUv = interpolatedUv + 0.05 * gradient;
+    vec4 sampleColor = texture2D(texture, bumpedUv);
+
+    // Using Phong Lighting Model with bumped normal
+    vec3 ambient = 0.1 * sampleColor.rgb;
+    vec3 lightDir = normalize(lightPosition - interpolatedPosition);
+    float diff = max(dot(bumpedNormal, lightDir), 0.0);
+    vec3 diffuse = diff * sampleColor.rgb;
+    vec3 viewDir = normalize(-interpolatedPosition);
+    vec3 reflectDir = reflect(-lightDir, bumpedNormal);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+    vec3 specular = vec3(0.5) * spec;
+    vec3 color = ambient + diffuse + specular;
 
     /**
      *  --Task--
@@ -44,5 +72,5 @@ void main(void) {
      *   4. Copy your Phong or Blinn here and use the color and normal we just found.
      */
 
-    gl_FragColor = vec4(0.8, 0.0, 0.0, 1.0);
+    gl_FragColor = vec4(color, sampleColor.a);
 }
