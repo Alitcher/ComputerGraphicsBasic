@@ -10,6 +10,8 @@ in vec3 position;
 in vec3 normal;
 in vec2 uv;
 
+uniform vec2 uvScale;
+
 out vec3 interpolatedNormal;
 out vec3 interpolatedPosition;
 out vec2 interpolatedUv;
@@ -22,5 +24,5 @@ void main(void) {
 
     interpolatedNormal = normalize(normalMatrix * normal);
     interpolatedPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
-    interpolatedUv = uv;
+    interpolatedUv = uv * uvScale;
 }
